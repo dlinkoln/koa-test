@@ -1,20 +1,38 @@
-const Koa = require('koa');
-const views = require('koa-views');
-const Router = require('koa-router');
-const path = require('path');
+const Koa = require("koa");
+const Router = require("koa-router");
+const bodyParser = require("koa-body");
+const config = require("config");
+require("./src/libs/mongoose");
+const passport = require("./src/libs/passport/index");
+
+passport.initialize();
 
 const app = new Koa();
 const router = new Router();
 
 app.use(
-  views(path.join(__dirname, '/src/templates'), {
-    extension: 'njk',
-    map: {
-      njk: 'nunjucks',
-    },
-  }),
+  bodyParser({
+    multipart: true
+  })
 );
-router.use('/', require('./src/routes').routes());
+
+app.use(async (ctx, next) => {
+  try {
+    await next();
+  } catch (err) {
+    // console.log(err);
+    // const errors = [];
+    // Object.keys(err.errors).forEach((key) => {
+    //   errors.push(err.errors[key].message);
+    // });
+    ctx.status = 500;
+    ctx.body = {
+      error: true
+    };
+  }
+});
+
+router.use("/accounts", require("./src/accounts/routes").routes());
 
 app.use(router.routes());
 
