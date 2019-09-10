@@ -1,6 +1,7 @@
 const Koa = require("koa");
 const Router = require("koa-router");
 const bodyParser = require("koa-body");
+const cors = require("koa2-cors");
 const config = require("config");
 require("./src/libs/mongoose");
 const passport = require("./src/libs/passport/index");
@@ -9,6 +10,14 @@ passport.initialize();
 
 const app = new Koa();
 const router = new Router();
+
+app.use(
+  cors({
+    origin() {
+      return "*";
+    }
+  })
+);
 
 app.use(
   bodyParser({

@@ -1,6 +1,7 @@
-const User = require("./models/user");
 const passport = require("koa-passport");
 const config = require("config");
+const jwt = require("jwt-simple");
+const User = require("./models/user");
 
 exports.signIn = async (ctx, next) => {
   await passport.authenticate("local", (err, user) => {
@@ -12,7 +13,8 @@ exports.signIn = async (ctx, next) => {
       ctx.body = {
         token: jwt.encode(payload, config.get("jwtSecret")),
         user: {
-          fullName: user.fullName,
+          firstname: user.firstname,
+          lastname: user.lastname,
           email: user.email,
           photo: user.photo
         }
@@ -26,15 +28,32 @@ exports.signIn = async (ctx, next) => {
 };
 
 exports.signUp = async ctx => {
-  const user = new User({
-    fullName: "Vasya Pupkin",
-    email: "vasya@pupki1n.org",
-    password: "q"
-  });
-  await user.save();
-  ctx.body = {
-    success: true
-  };
+  const { firstname, lastname, email, username, password } = ctx.request.body;
+  console.log(ctx.request.body);
+  try {
+    const emailFromDB = await User.find({
+      email
+    });
+    console.log(emailFromDB);
+    if (emailFromDB.length !== 0) {
+      ctx.response.status = 400;
+      ctx.body = {
+        err: "This is email already registrated "
+      };
+    } else {
+      const user = new User({
+        firstname,
+        lastname,
+        username,
+        email,
+        password
+      });
+      await user.save();
+      ctx.status = 200;
+    }
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 exports.profile = async ctx => {
